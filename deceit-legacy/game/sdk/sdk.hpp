@@ -13,6 +13,11 @@ namespace sdk
 	struct u_class_t{};
 	struct u_object_t
 	{
+		static u_class_t* find_class( const wchar_t* _name )
+		{
+			return reinterpret_cast< u_class_t* >( u_class_find_object( reinterpret_cast< void* >( -1 ), _name ) );
+		}
+
 		__forceinline static __int64* u_class_find_object( void* _outer, const wchar_t* _name )
 		{
 			const auto base = reinterpret_cast< uintptr_t >( GetModuleHandleA( nullptr ) );
@@ -65,7 +70,16 @@ namespace sdk
 		}
 	};
 
-	struct a_player_controller_t : a_controller_t {};
+	struct a_player_controller_t : a_controller_t
+	{
+		struct a_pawn_t* acknowledged_pawn( ) {
+			if ( !memory_utils_t::is_address_valid( this ) )
+				return nullptr;
+
+			return memory_utils_t::read<struct a_pawn_t*>( this + 0x350 );
+		}
+	};
+
 	struct u_player_t : u_object_t
 	{
 		struct a_player_controller_t* player_controller( ) {
@@ -100,6 +114,103 @@ namespace sdk
 		{
 			const auto base = reinterpret_cast< uintptr_t >( GetModuleHandleA( nullptr ) );
 			return memory_utils_t::read<u_world_t*>( base + 0x9dbf848 );
+		}
+	};
+
+	struct u_blueprint_function_library_t : u_object_t{};
+	struct u_gameplay_statics_t : u_blueprint_function_library_t
+	{
+		static u_class_t* static_class( )
+		{
+			static u_class_t* ptr = nullptr;
+			if ( !ptr )
+				ptr = find_class( L"Engine.GameplayStatics" );
+
+			return ptr;
+		}
+	};
+
+	struct u_subsystem : u_object_t
+	{
+		static u_class_t* static_class( )
+		{
+			static u_class_t* ptr = nullptr;
+			if ( !ptr )
+				ptr = u_object_t::find_class( L"Engine.Subsystem" );
+
+			return ptr;
+		}
+	};
+
+	struct u_game_instance_subsystem_t : u_subsystem
+	{
+		static u_class_t* static_class( )
+		{
+			static u_class_t* ptr = nullptr;
+			if ( !ptr )
+				ptr = u_object_t::find_class( L"Engine.GameInstanceSubsystem" );
+
+			return ptr;
+		}
+	};
+
+	struct u_subsystem_blueprint_library_t : u_blueprint_function_library_t
+	{
+		u_game_instance_subsystem_t* get_game_instance_subsystem( u_object_t* _ctx, u_class_t* _class )
+		{
+			static u_object_t* function = nullptr;
+			if ( !function )
+				function = find_object<u_object_t*>( L"Engine.SubsystemBlueprintLibrary.GetGameInstanceSubsystem" );
+
+			struct {
+				u_object_t* ctx_;
+				u_class_t* class_;
+				u_game_instance_subsystem_t* res_;
+			}params;
+
+			params.ctx_ = _ctx;
+			params.class_ = _class;
+
+			this->process_event( function, &params );
+
+			return params.res_;
+		}
+	};
+
+	struct u_social_client_t : u_object_t
+	{
+		void set_legacy_enabled( bool _enabled )
+		{
+			static u_object_t* function = nullptr;
+			if ( !function )
+				function = u_object_t::find_object<u_object_t*>( L"DeceitCloud.SocialClient.SetLegacyEnabled" );
+
+			struct
+			{
+				bool enabled;
+			}params;
+
+			params.enabled = _enabled;
+
+			this->process_event( function, &params );
+		}
+	};
+
+	struct u_deceit_cloud_subsystem_t : u_game_instance_subsystem_t
+	{
+		struct u_social_client_t* social_client( ) {
+			if ( !memory_utils_t::is_address_valid( this ) )
+				return nullptr;
+
+			return memory_utils_t::read<struct u_social_client_t*>( this + 0xE8 );
+		}
+
+		static u_class_t* static_class( ) {
+			static u_class_t* ptr = nullptr;
+			if ( !ptr )
+				ptr = u_object_t::find_class( L"DeceitCloud.DeceitCloudSubsystem" );
+
+			return ptr;
 		}
 	};
 }
