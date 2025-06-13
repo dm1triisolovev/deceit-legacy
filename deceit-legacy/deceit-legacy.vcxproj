@@ -22,6 +22,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="game\sdk\basic_types\basic_types.hpp" />
     <ClInclude Include="game\sdk\sdk.hpp" />
     <ClInclude Include="memory\memory.hpp" />
   </ItemGroup>

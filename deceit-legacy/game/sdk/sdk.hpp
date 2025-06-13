@@ -2,6 +2,8 @@
 
 #include "../../memory/memory.hpp"
 
+#include "basic_types/basic_types.hpp"
+
 #define FUNCTION_TYPE( type, name, address, ... ) \
 		using fn = type(*)( __VA_ARGS__ ); \
 		const auto fn_##name = reinterpret_cast<fn>( address )
@@ -52,8 +54,48 @@ namespace sdk
 		}
 	};
 
+	struct a_actor_t : u_object_t {};
+	struct a_controller_t : a_actor_t
+	{
+		struct a_pawn_t* pawn( ) {
+			if ( !memory_utils_t::is_address_valid( this ) )
+				return nullptr;
+
+			return memory_utils_t::read<struct a_pawn_t*>( this + 0x2E8 );
+		}
+	};
+
+	struct a_player_controller_t : a_controller_t {};
+	struct u_player_t : u_object_t
+	{
+		struct a_player_controller_t* player_controller( ) {
+			if ( !memory_utils_t::is_address_valid( this ) )
+				return nullptr;
+
+			return memory_utils_t::read<a_player_controller_t*>( this + 30 );
+		}
+	};
+
+	struct u_local_player_t : u_player_t {};
+	struct u_game_instance_t
+	{
+		TArray<struct u_local_player_t*> local_players( ) {
+			if ( !memory_utils_t::is_address_valid( this ) )
+				return {};
+
+			return memory_utils_t::read<TArray<struct u_local_player_t*>>( this + 0x38 );
+		}
+	};
+
 	struct u_world_t : u_object_t
 	{
+		struct u_game_instance_t* owning_game_instance( ) {
+			if ( !memory_utils_t::is_address_valid( this ) )
+				return nullptr;
+
+			return memory_utils_t::read<u_game_instance_t*>( this + 0x1D8 );
+		}
+
 		static u_world_t* get( )
 		{
 			const auto base = reinterpret_cast< uintptr_t >( GetModuleHandleA( nullptr ) );
