@@ -22,7 +22,6 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="game\offsets.hpp" />
     <ClInclude Include="game\sdk\sdk.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

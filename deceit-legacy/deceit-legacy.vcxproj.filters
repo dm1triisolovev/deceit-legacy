@@ -5,6 +5,5 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game\sdk\sdk.hpp" />
-    <ClInclude Include="game\offsets.hpp" />
   </ItemGroup>
 </Project>
